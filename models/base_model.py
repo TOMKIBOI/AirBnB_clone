@@ -1,48 +1,59 @@
 #!/usr/bin/python3
-"""
-This is parent class Base model
+"""Module base_model
+
+This Module contains a definition for BaseModel Class
 """
 
-from datetime import datetime
-from model import storage
 import uuid
+from datetime import datetime
 
-time = "%Y-%m-%dT%H:%M:%S.%f"
-
-if models.storage_t == "datab":
-    Base = declarative_base()
-else:
-    Base = object
+import models
 
 
 class BaseModel:
-    """The parent class BaseModel from where other classes will be created"""
-    if models.storage_t == "datab":
-        id = Column(String(40), primary_key=True)
-        created_at = Column(DateTime, default=datetime.utcnow)
-        updated_at = Column(DateTime, default=datetime.utcnow)
+    """BaseModel Class"""
 
     def __init__(self, *args, **kwargs):
-        """Initialization stage of the BaseModel class"""
-        if kwargs:
-            for key, value in kwargs.items():
-                if key != "__class__":
-                    setattr(self, key, value)
-            if kwargs.get("created_at", None) and type(self.created_at) is str:
-                self.created_at = datetime.strptime(kwargs["created_at"], time)
-            else:
-                self.created_at = datetime.now()
-            if kwargs.get("updated_at", None) and type(self.updated_at) is str:
-                self.updated_at = datetime.strptime(kwargs["updated_at"], time)
-            else:
-                self.updated_at = datetime.now()
-            if kwargs.get("id", None) is None:
-                self.id = str(uuid.uuid4())
-        else:
-            self.id = str(uuid.uuid4())
-            self.created_at = datetime.now()
-            self.updated_at = self.created_at
+        """__init__ method & instantiation of class Basemodel
 
-    def __str__(self):
-        """This is how string are represented in BaseModel"""
+        Args:
+            *args.
+            **kwargs (dict): Key/value pairs
+        """
+        self.id = str(uuid.uuid4())
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+
+        if kwargs is not None and len(kwargs) > 0:
+            for k, v in kwargs.items():
+                if k == "__class__":
+                    continue
+                elif k in ["created_at", "updated_at"]:
+                    setattr(self, k, datetime.fromisoformat(v))
+                else:
+                    setattr(self, k, v)
+        else:
+            models.storage.new(self)
+
+    def save(self):
+        """Update updated_at with the current datetime."""
+        self.updated_at = datetime.now()
+        models.storage.save()
+
+    def to_dict(self):
+        """
+        returns a dictionary containing all
+        keys/values of __dict__ of the instance
+        """
+        bs_dict = (
+            {
+                k: (v.isoformat() if isinstance(v, datetime) else v)
+                for (k, v) in self.__dict__.items()
+            }
+        )
+        bs_dict["__class__"] = self.__class__.__name__
+        return bs_dict
+
+    def __str__(self) -> str:
+        """should print/str representation of the BaseModel instance."""
         return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
