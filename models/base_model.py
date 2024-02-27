@@ -45,5 +45,4 @@ class BaseModel:
 
     def __str__(self):
         """This is how string are represented in BaseModel"""
-        return "[{:s}] ({:s}) {}".format(self.__class__.__name__, self.id,
-                                         self.__dict__).
+        return f"[{self.__class__.__name__}] ({self.id}) {self.__dict__}"
